@@ -1,3 +1,3 @@
 # Ind Eng c253 ♥️ Final Project
 
-This is an code attemp of this algorithm.
+This is an code attemp to this algorithm.
