@@ -1,0 +1,83 @@
+class KruskalMST:
+    def __init__(self, G):
+        self.mst = []
+        pq = MinPQ()
+        for e in G.edges():
+            pq.insert(e)
+        uf = WeightedQuickUnionPC(G.V())
+        while not pq.isEmpty() and len(self.mst) < G.V() - 1:
+            e = pq.delMin()
+            v = e.from_()
+            w = e.to()
+            if not uf.connected(v, w):
+                uf.union(v, w)
+                self.mst.append(e)
+class MinPQ:
+    def __init__(self):
+        self.heap = []
+
+    def isEmpty(self):
+        return len(self.heap) == 0
+
+    def insert(self, item):
+        self.heap.append(item)
+        self._swim(len(self.heap) - 1)
+
+    def delMin(self):
+        if self.isEmpty():
+            return None
+        self._swap(0, len(self.heap) - 1)
+        min_item = self.heap.pop()
+        self._sink(0)
+        return min_item
+
+    def _swim(self, k):
+        while k > 0 and self._less(k, (k - 1) // 2):
+            self._swap(k, (k - 1) // 2)
+            k = (k - 1) // 2
+
+    def _sink(self, k):
+        n = len(self.heap)
+        while 2 * k + 1 < n:
+            j = 2 * k + 1
+            if j + 1 < n and self._less(j + 1, j):
+                j += 1
+            if self._less(k, j):
+                break
+            self._swap(k, j)
+            k = j
+
+    def _less(self, i, j):
+        return self.heap[i] < self.heap[j]
+
+    def _swap(self, i, j):
+        self.heap[i], self.heap[j] = self.heap[j], self.heap[i]
+
+
+class WeightedQuickUnionPC:
+    def __init__(self, N):
+        self.count = N
+        self.parent = [i for i in range(N)]
+        self.size = [1] * N
+
+    def connected(self, p, q):
+        return self.find(p) == self.find(q)
+
+    def find(self, p):
+        while p != self.parent[p]:
+            self.parent[p] = self.parent[self.parent[p]]
+            p = self.parent[p]
+        return p
+
+    def union(self, p, q):
+        root_p = self.find(p)
+        root_q = self.find(q)
+        if root_p == root_q:
+            return
+        if self.size[root_p] < self.size[root_q]:
+            self.parent[root_p] = root_q
+            self.size[root_q] += self.size[root_p]
+        else:
+            self.parent[root_q] = root_p
+            self.size[root_p] += self.size[root_q]
+        self.count -= 1
