@@ -1,73 +1,36 @@
-class KruskalMST:
-    def __init__(self, G):
-        self.mst = []
-        pq = MinPQ()
-        for e in G.edges():
-            pq.insert(e)
-        uf = WeightedQuickUnionPC(G.V())
-        while not pq.isEmpty() and len(self.mst) < G.V() - 1:
-            e = pq.delMin()
-            v = e.from_()
-            w = e.to()
-            if not uf.connected(v, w):
-                uf.union(v, w)
-                self.mst.append(e)
 class MinPQ:
     def __init__(self):
-        self.heap = []
+        self.pq = []
 
     def isEmpty(self):
-        return len(self.heap) == 0
+        return len(self.pq) == 0
+
+    def size(self):
+        return len(self.pq)
 
     def insert(self, item):
-        self.heap.append(item)
-        self._swim(len(self.heap) - 1)
+        self.pq.append(item)
+        self.pq.sort(key=lambda x: x.weight)
 
     def delMin(self):
         if self.isEmpty():
             return None
-        self._swap(0, len(self.heap) - 1)
-        min_item = self.heap.pop()
-        self._sink(0)
-        return min_item
-
-    def _swim(self, k):
-        while k > 0 and self._less(k, (k - 1) // 2):
-            self._swap(k, (k - 1) // 2)
-            k = (k - 1) // 2
-
-    def _sink(self, k):
-        n = len(self.heap)
-        while 2 * k + 1 < n:
-            j = 2 * k + 1
-            if j + 1 < n and self._less(j + 1, j):
-                j += 1
-            if self._less(k, j):
-                break
-            self._swap(k, j)
-            k = j
-
-    def _less(self, i, j):
-        return self.heap[i] < self.heap[j]
-
-    def _swap(self, i, j):
-        self.heap[i], self.heap[j] = self.heap[j], self.heap[i]
+        return self.pq.pop(0)
 
 
 class WeightedQuickUnionPC:
-    def __init__(self, N):
-        self.count = N
-        self.parent = [i for i in range(N)]
-        self.size = [1] * N
-
-    def connected(self, p, q):
-        return self.find(p) == self.find(q)
+    def __init__(self, n):
+        self.parent = list(range(n))
+        self.size = [1] * n
 
     def find(self, p):
         while p != self.parent[p]:
             self.parent[p] = self.parent[self.parent[p]]
             p = self.parent[p]
         return p
+
+    def connected(self, p, q):
+        return self.find(p) == self.find(q)
 
     def union(self, p, q):
         root_p = self.find(p)
@@ -80,4 +43,86 @@ class WeightedQuickUnionPC:
         else:
             self.parent[root_q] = root_p
             self.size[root_p] += self.size[root_q]
-        self.count -= 1
+
+
+class Edge:
+    def __init__(self, v, w, weight):
+        self.v = v
+        self.w = w
+        self.weight = weight
+
+    def either(self):
+        return self.v
+
+    def other(self, vertex):
+        if vertex == self.v:
+            return self.w
+        return self.v
+
+    def compareTo(self, other):
+        return self.weight - other.weight
+
+
+class EdgeWeightedGraph:
+    def __init__(self, V):
+        self.V = V
+        self.adj = [[] for _ in range(V)]
+
+    def addEdge(self, edge):
+        v = edge.either()
+        w = edge.other(v)
+        self.adj[v].append(edge)
+        self.adj[w].append(edge)
+
+    def edges(self):
+        edges = []
+        for v in range(self.V):
+            for edge in self.adj[v]:
+                if edge.other(v) > v:
+                    edges.append(edge)
+        return edges
+
+
+class KruskalMST:
+    def __init__(self, G):
+        self.mst = []
+        pq = MinPQ()
+        for e in G.edges():
+            pq.insert(e)
+        uf = WeightedQuickUnionPC(G.V)
+        while not pq.isEmpty() and len(self.mst) < G.V - 1:
+            e = pq.delMin()
+            v = e.either()
+            w = e.other(v)
+            if not uf.connected(v, w):
+                uf.union(v, w)
+                self.mst.append(e)
+    def printMST(self):
+        total_weight = 0
+        for edge in self.mst:
+            v = edge.either()
+            w = edge.other(v)
+            weight = edge.weight
+            print(f"{v} -- {w} \t{weight}")
+            total_weight += weight
+        print(f"Total weight of the minimum spanning tree: {total_weight}")
+
+
+
+# Example usage
+V = 5  # Number of vertices
+graph = EdgeWeightedGraph(V)
+
+# Add edges to the graph
+graph.addEdge(Edge(0, 1, 2))
+graph.addEdge(Edge(0, 3, 6))
+graph.addEdge(Edge(1, 2, 3))
+graph.addEdge(Edge(1, 3, 8))
+graph.addEdge(Edge(1, 4, 5))
+graph.addEdge(Edge(2, 4, 7))
+graph.addEdge(Edge(3, 4, 9))
+
+
+# Create Kruskal's MST object and find the minimum spanning tree
+mst = KruskalMST(graph)
+mst.printMST()
